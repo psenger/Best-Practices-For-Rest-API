@@ -2,7 +2,7 @@
 Best Practices for Building REST Apis
 ---
 
-Ive been building API for Service Oriented Applications for over a decade. Many API design opinions and guidelines I have found are more academic in nature and less real world. My goal with this article is to describe the best practices for a pragmatic API approach based on my experience. Ive found the following items to be the key to the success of the Human Aspect of my systems.
+Ive been building API for Service Oriented Applications for over a decade. Many API design opinions and guidelines I have found are more academic in nature and less real world. My goal with this article is to describe the best practices for a pragmatic API approach based on my experience. Ive found the following items to be the key to the success of my systems The Human Aspect, Security and Permissions, Implementation.
 
 # The Human Aspect
 
@@ -29,7 +29,7 @@ Use tools like [Swagger.io](http://Swagger.io) to build a design first approach.
 
 If you cant explain your api in 30 seconds, it will be difficult to explain in writing. Use web standards only where they make sense. A developer should be able to use a browser and point it at the service to see the results. 
 
-# Security
+# Security and Permissions
 
 Use SSL everywhere, no exceptions. Don't worry about debugging the payload, Charles Proxy can do that for you.  
 
@@ -38,3 +38,5 @@ Ue tokens, and make them expire within 15-20 minutes. Make sure the refresh toke
 Use oAuth V2 if possible and never store passwords ( only the salted hash ).
 
 Keep roles as simple as possible.
+
+
