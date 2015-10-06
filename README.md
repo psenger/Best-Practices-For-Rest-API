@@ -4,7 +4,9 @@ Best Practices for Building REST Apis
 
 Ive been building API for Service Oriented Applications for over a decade. Many API design opinions and guidelines I have found are more academic in nature and less real world. My goal with this article is to describe the best practices for a pragmatic API approach based on my experience. Ive found the following items to be the key to the success of my systems The Human Aspect, Security and Permissions, Implementation.
 
-# The Human Aspect
+# The Human Aspect or the Biggest Barriers to Implementation
+
+Service Oriented Architecture is a relatively new concept. "New" meaning with in the last 25 years. Before that we had Remote Procedures Calls which gained wide popularity with the advent of Common Object Request Broker Architecture (CORBA) and the father of electronic data interchange, EDI. After these technologies there was SOAP and a variety of other technologies. Given the dynamic nature of this landscape and added complexity. it is easy to understand that the biggest barrier to adoption and therefore implementation would be resistance by people. 
 
 1. Adoption
 2. Standards and Consistency
@@ -31,12 +33,12 @@ If you cant explain your api in 30 seconds, it will be difficult to explain in w
 
 # Security and Permissions
 
-Use SSL everywhere, no exceptions. Don't worry about debugging the payload, Charles Proxy can do that for you.  
-
-Ue tokens, and make them expire within 15-20 minutes. Make sure the refresh tokens work once and only once. 
-
-Use oAuth V2 if possible and never store passwords ( only the salted hash ).
-
-Keep roles as simple as possible.
+1. Use SSL everywhere, no exceptions. Don't worry about debugging the payload, Charles Proxy has the ability to be the man-in-the-middle and grant you visibility into the payload. 
+2. Ue tokens, and make them expire within 15-20 minutes. Make sure the refresh tokens work once and only once. 
+3. Use oAuth V2 if possible
+4. never store passwords ( only the salted hash ).
+5. Use Role Based Permissions. 
+6. Keep roles as simple as possible. They always become more complex as time evolves.
+7. Use Grant Based permissions and NEVER restriction based permissions. 
 
 
