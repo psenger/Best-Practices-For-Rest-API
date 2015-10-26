@@ -23,13 +23,21 @@ Use tools like [Swagger.io](http://Swagger.io) to build a design first approach.
 
 ### Assurance
 
+Creating tests should be part of every developers daily activity. It provides assurance that the goal was accomplished and meets the needs of the specification.
+
 ## Standards and Consistency
 
 ## Self Discovery
 
+Self discovery implies that links within the model coupled with meta data will make discovery of other endpoints and additional supporting data easy and helpful. 
+
+This activity will aid in promoting the adoption of the system
+
+When you have a href in the model, always include a **rel** value. This is one of the few meta data values that is widely adopted. I have found it better to actually include a directory of all the **rel** types in the system. This allows the developers to create decorators and easily create modules that can consume the values. 
+
 ## Intuitive
 
-If you cant explain your api in 30 seconds, it will be difficult to explain in writing. Use web standards only where they make sense. A developer should be able to use a browser and point it at the service to see the results. 
+If you can not explain your api in 30 seconds, it will be difficult to explain in writing. Use web standards only where they make sense. A developer should be able to use a browser and point it at the service to see the results. 
 
 # Security and Permissions
 
@@ -39,6 +47,13 @@ If you cant explain your api in 30 seconds, it will be difficult to explain in w
 4. never store passwords ( only the salted hash ).
 5. Use Role Based Permissions. 
 6. Keep roles as simple as possible. They always become more complex as time evolves.
-7. Use Grant Based permissions and NEVER restriction based permissions. 
+7. Use a **Grant** based permissions model and NEVER restriction based permissions model.
+8. Rate limiting should always be added to an endpoint. I have found it to be helpful if the rate limit countdown was in the headers. See GIT for a h
 
 
+## Rate Limiting
+
+Rate limiting prevents users from _sucking_ all the data out of your system and prevents potentially dangerous si
+
+
+ 
