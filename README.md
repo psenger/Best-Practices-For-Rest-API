@@ -2,11 +2,11 @@
 # Best Practices for Building REST Apis
 ---
 
-Ive been building API for Service Oriented Applications for over a decade. Many API design opinions and guidelines I have found are more academic in nature and less real world. My goal with this article is to describe the best practices for a pragmatic API approach based on my experience and as a framework for my thoughts. Ive found the following items to be the key to the success of my systems The Human Aspect, Security and Permissions, Implementation.
+Ive been building API for Service Oriented Applications for over a decade. Many API design opinions and guidelines I have found are academic in nature and less real world or practical. My goal with this article is to describe the best practices for a pragmatic API approach based on my experience and as a framework for my thoughts. Ive found the following items to be the key to the success of my systems The Human Aspect, Security and Permissions, Implementation.
 	
 # The Human Aspect
 
-Service Oriented Architecture is a relatively new concept. "New" meaning with in the last 25 years. Before that we had Remote Procedures Calls which gained  popularity with the advent of Common Object Request Broker Architecture (CORBA) and the father of electronic data interchange, EDI. After these technologies there was SOAP and a variety of other technologies. Given the dynamic nature of this landscape and added complexity. it is easy to understand that the biggest barrier to adoption and therefore implementation would be resistance by people. 
+Service Oriented Architecture is a relatively new concept. "New" meaning with in the last 25 years. Before that we had Remote Procedures Calls which gained popularity with the advent of Common Object Request Broker Architecture (CORBA) and the father of electronic data interchange, EDI. After these technologies there was SOAP and a variety of other technologies. Given the dynamic nature of this landscape and added complexity, it is easy to understand that the biggest barrier to adoption and therefore implementation would be resistance by people. This resistance can come in the form of laziness, being overloaded with work, and pure anti social and stubbornness. 
 
 1. Adoption
 2. Standards and Consistency
@@ -23,7 +23,15 @@ Although I can't guarantee adoption, there are several pillars needed for adopti
 
 ### Easy of use
 
-Adoption is always blocked when 
+Adoption is always blocked when you can't sell the concept. Besides having a elevator pitch ready, you need to remove all barriers preventing adoption. These tend to be.
+
+1. Lack of documentation
+2. Lack of standards
+3. Lack of convention
+4. Difficulty in gaining access to resources.
+
+Now, how can you do these things in a faster way ? I use Swagger
+
 
 ### Documentation
 
@@ -39,7 +47,7 @@ Creating tests should be part of every developers daily activity. It provides as
 
 ## Standards and Consistency
 
-Keep your services designed to serve **Resources** otherwise you risk the chances that your Service will become a remote procedure call. REST is Representational State Transfer, not RPC or Remote Procedure Call.
+Keep your services designed to serve **Resources** otherwise you risk the chances that your Services will become a remote procedure call. REST is Representational State Transfer, not RPC or Remote Procedure Call. 
 
 ### Naming convention
 
@@ -51,13 +59,13 @@ End points should be nouns, such as **Books** or **Users**. Names that are verbs
 
 #### Versioning
 
-Resources should be versioned, in the url works best. Because you can stand up a server to represent that endpoint, and not convolute your code with cross concerns of versioning. for example 
+Resources should be versioned, in the base of the url works best. This works in the base of the url because it is easy to stand up a server to represent that endpoint, and not convolute your code with cross concerns of versioning. for example 
 
 ```
 /v2/books
 ```
 
-Keep in mind that semantic versioning works, but the major number implies incompatibility. So as a convention, use the major number for endpoints. So don't do names for the versions such as 
+Keep in mind that semantic versioning works, but the major number implies incompatibility. So as a convention, use the major number for endpoints. Avoid names for the versions such as "2.14.2". As you can see this will ultimately become a nightmare to manage.
 
 ```
 /v2.14.2/books
@@ -82,11 +90,13 @@ Making the name singular such as **/book** sounds as if you are going to create 
 
 ##### CRUD
 
-Create Read Update Delete should be represented through the HTTP Verbs.
+Create Read Update Delete should always be represented through the HTTP Verbs.
 
 ## Self Discovery
 
 Self discovery implies that links within the model coupled with meta data will make discovery of other endpoints and additional supporting data easy, helpful, and data driven. 
+
+Links to the details of a entity should be also provided here.   
 
 This feature will aid in promoting the adoption of the system.
 
@@ -104,16 +114,24 @@ When you have a hrefs in the model, always include a **rel** value. This is one 
 
 ## Intuitive
 
-If you can not explain your api in 30 seconds, it will be difficult to explain in writing let alone to others. Use web standards only where they make sense but use standards if possible. For example, a developer should be able to use a browser and point it at the service to see the results.
+If you can not explain your api in 30 seconds ( the elevator pitch ), it will be difficult to explain in writing let alone to others in documentation. Use web standards only where they make sense but **use the standards**. For example, a developer should be able to use a browser and point it at the service to see the results. Additionally, JSON is the new standard for the format of the data. This is a schema-less format, so you will need to make the schema relevant to the domain and relevant to the users.
 
 # Security and Permissions
 
-3. Use oAuth V2 if possible
-4. never store passwords ( only the salted hash ).
+For private APIs I suggest Tokens, specifically JWT. For public facing APIs use oAuth V2. Avoid Basic Auth. While this is the standard way to auth a user, it is not appropriate for a Application.  
+
+If you have to store credentials, never store the password, use a salted hash. preferable with a App Salt and a User Salt. 
+
+## Principal 
+
 5. Use Role Based Permissions. 
 6. Keep roles as simple as possible. They always become more complex as time evolves.
 7. Use a **Grant** based permissions model and NEVER restriction based permissions model.
 8. Rate limiting should always be added to an endpoint. I have found it to be helpful if the rate limit countdown was in the headers. See GIT for a h
+
+## Passwords
+
+If you have to store passwords, don't. Create a App Salt and a User Salt. Add the two together to do a hmac5 digest verification of the password. 
 
 ## Encrypted Transmission
 
@@ -125,6 +143,10 @@ If you can, use JWT it has been around for a while, easy to explain, and the int
 
 JWT provides access to the claim. You can create a version number in the claim. Use the version number to notify your client that the version of the app is outdated and needs to be updated.
 
+Claims can be decoded, as they are base64. this can provide meta data to the client on how to behave. For example, the principal's roles can be encased in the claims and the app can then use the roles to dictate the presentation. Furthermore, the subjects name can also be encased in the payload. 
+
+
+
 JWT 
 Ue tokens, and make them expire within 15-20 minutes. Make sure the refresh tokens work once and only once.
 
@@ -132,6 +154,4 @@ Ue tokens, and make them expire within 15-20 minutes. Make sure the refresh toke
 ## Rate Limiting
 
 Rate limiting prevents users from _sucking_ all the data out of your system and prevents potentially dangerous dos attacks.
-
-
 
