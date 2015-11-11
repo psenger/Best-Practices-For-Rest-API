@@ -118,11 +118,11 @@ If you can not explain your api in 30 seconds ( the elevator pitch ), it will be
 
 # Security and Permissions
 
-For private APIs I suggest Tokens, specifically JWT. For public facing APIs use oAuth V2. Avoid Basic Auth. While this is the standard way to auth a user, it is not appropriate for a Application.  
+For private APIs I suggest Tokens, specifically JWT. For public facing APIs use oAuth V2. Avoid Basic Auth. While this is the standard way to authenticate a user, it is not appropriate for an Application.  
 
 If you have to store credentials, never store the password, use a salted hash. preferable with a App Salt and a User Salt. 
 
-## Principal 
+## Principal and Subjects
 
 5. Use Role Based Permissions. 
 6. Keep roles as simple as possible. They always become more complex as time evolves.
@@ -145,8 +145,6 @@ JWT provides access to the claim. You can create a version number in the claim. 
 
 Claims can be decoded, as they are base64. this can provide meta data to the client on how to behave. For example, the principal's roles can be encased in the claims and the app can then use the roles to dictate the presentation. Furthermore, the subjects name can also be encased in the payload. 
 
-
-
 JWT 
 Ue tokens, and make them expire within 15-20 minutes. Make sure the refresh tokens work once and only once.
 
@@ -154,4 +152,50 @@ Ue tokens, and make them expire within 15-20 minutes. Make sure the refresh toke
 ## Rate Limiting
 
 Rate limiting prevents users from _sucking_ all the data out of your system and prevents potentially dangerous dos attacks.
+
+
+## Payload Wrappers / Envelopes and Pagination
+
+I have implemented on several cases a Payload Wrapper or Envelope for the purpose of pagination through large volumes of data. They basically looked like the following. 
+
+In this case, it included a page, page size, and toal. 
+```JS
+{ 
+	data: [],
+	page: 0,
+	total: 2340,
+	pageSize: 50,
+}
+```
+
+In this cases, I built a set of pages like google
+```JS
+{ 
+	data: [],
+	pages : [
+		{ rel: "_prev", href : "http://foo" },
+		{ rel: "_page_1", href : "http://foo" },
+		{ rel: "_page_2", href : "http://foo" },
+		{ rel: "_page_3", href : "http://foo" },
+		{ rel: "_page_4", href : "http://foo" },
+		{ rel: "_page_5", href : "http://foo" },
+		{ rel: "_next", href : "http://foo" },
+	]
+}
+```
+
+In this case, implemented the following which is foundly refered to as the endless list pattern.
+```JS
+{ 
+	data: [],
+	nextPage : { rel: "_next", href : "http://foo" },
+}
+```
+
+Recently I packed the pagination data in the response header and passed the data back as an array of object literals.
+```
+x-page: 10
+x-page-size: 50
+x-page-total: 2340
+```
 
