@@ -153,6 +153,29 @@ Ue tokens, and make them expire within 15-20 minutes. Make sure the refresh toke
 
 Rate limiting prevents users from _sucking_ all the data out of your system and prevents potentially dangerous dos attacks.
 
+## Payload Content Restrictons
+
+In MogoDB and some BASS systems you can use a pattern called _proejction_ this is the act of sending what members you want to include or exlcude in the payload. 
+
+For example, if you want to exclude everything except fname, lname and ssn. The uri would have 
+```
+&projection=+fname,+lname,+ssn
+```
+
+Alternatively you could use _-_ to indicate remove. Generlly, avoid negative and use additive _+_. It is also possible to use a HTTP Header value and avoid the query parameter all together.
+
+```
+GET / HTTP/1.1
+Host: erbosoft .com
+Connection: keep-alive
+Cache-Control: max-age=0
+Accept: text/html,application/xhtml+xml,application/xml;q=0.9,image/webp,*/*;q=0.8
+User-Agent: Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/38.0.2125.104 Safari/537.36
+Accept-Encoding: gzip,deflate,sdch
+Accept-Language: en-US,en;q=0.8
+If-Modified-Since: Tue, 07 Feb 2012 04:44:06 GMT
+Projection: +fname,+lname,+ssn
+```
 
 ## Payload Wrappers / Envelopes and Pagination
 
