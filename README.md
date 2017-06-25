@@ -62,7 +62,11 @@ End points should be nouns, such as **Books** or **Users**. Names that are verbs
 
 ##### Versioning
 
-Resources should be versioned, in the base of the url works best. This works in the base of the url because it is easy to stand up a server to represent that endpoint, and not convolute your code with cross concerns of versioning. for example 
+Resources should be versioned. There are two good ways to do this. both have advantages and disadvantges. 
+
+In the base of the url works best for the API team. This works in the base of the url because it is easy to stand up a server to represent that endpoint behind a firewall or Load Balancer, and not convolute your code with cross concerns of versioning. Unfortunately, the consumer of the API will have to be flexible enough to redeploy if the need to change in accordance. Refer to (http://semver.org/)[http://semver.org/] for the versioning technique. 
+
+URL based endpoints, for example:
 
 ```
 /v2/books
@@ -73,6 +77,10 @@ Keep in mind that semantic versioning works, but the major number implies incomp
 ```
 /v2.14.2/books
 ```
+
+One problem with putting the version in the url is applications will need to release in tandem. Avoid this with a header ``Accept-Version`` and the version number as the value. This will cause complexity in the API. 
+
+Restify has a good technique of mapping versions of the APIs to functions (Versioned Routes)[http://restify.com/#versioned-routes] 
 
 ##### Plural
 
