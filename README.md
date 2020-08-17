@@ -162,12 +162,17 @@ Renweal is simple, make a service that will generate a token when new is request
 
 Expiry within 15-20 minutes is a good rule of thumb. Make sure the refresh tokens work once and only once.
 
-
 ### Rate Limiting
 
 Rate limiting prevents users from _sucking_ all the data out of your system and prevents potentially dangerous dos attacks.
 
-### Payload Content Restrictons
+It is a good idea to reveal the rate usage as response headers.
+
+### Service Unavailable 504
+
+Dynamic horizontal scaling services may experience unavailability as they come on line. This really is not a good idea, but it does happen. Clients need to implement a retry attempt.
+
+### Payload Content Restrictions
 
 In MogoDB and some BASS systems you can use a pattern called _proejction_ this is the act of sending what members you want to include or exlcude in the payload. 
 
