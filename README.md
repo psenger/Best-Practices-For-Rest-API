@@ -284,7 +284,7 @@ Ive built many different type of error objects, I think this technique is favora
 **Example:** Here, the out-of-credit problem (identified by its type URI) indicates the reason for the 403 in "title", gives a reference for the specific problem occurrence with "instance", gives occurrence- specific details in "detail", and adds two extensions; "balance"conveys the account's balance, and "accounts" gives links where the account can be topped up.
 
 ```HTTP
-HTTP/1.1 403 Forbidden
+   HTTP/1.1 403 Forbidden
    Content-Type: application/problem+json
    Content-Language: en
 
@@ -303,7 +303,7 @@ HTTP/1.1 403 Forbidden
 **Example:** The ability to convey problem-specific extensions allows more than one problem to be conveyed.
 
 ```HTTP
-HTTP/1.1 400 Bad Request
+   HTTP/1.1 400 Bad Request
    Content-Type: application/problem+json
    Content-Language: en
 
@@ -311,6 +311,7 @@ HTTP/1.1 400 Bad Request
    "type": "https://example.net/validation-error",
    "title": "Your request parameters didn't validate.",
    "status": 400,
+   "detail": "The Age must be a positive integer and the color must be must be 'green', 'red' or 'blue'",
    "invalid-params": [ {
                          "name": "age",
                          "reason": "must be a positive integer"
