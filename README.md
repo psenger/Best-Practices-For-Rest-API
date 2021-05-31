@@ -243,6 +243,7 @@ x-page-total: 2340
 
 ### Errors - Problem Details for HTTP APIs ( [RFC 7807](https://datatracker.ietf.org/doc/html/rfc7807) )
 
+Ive built many different type of error objects, I think this technique is favorable.
 
 * ***type*** (string) - A URI reference [RFC3986] that identifies the problem type.  This specification encourages that, when dereferenced, it provide human-readable documentation for the problem type (e.g., using HTML [W3C.REC-html5-20141028]).  When this member is not present, its value is assumed to be "about:blank". This value should ( a URI ) should never change, making it a constant that systems can key on.
 
