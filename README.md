@@ -6,6 +6,32 @@ Written by Philip A Senger
 [philip.a.senger@cngrgroup.com](mailto:philip.a.senger@cngrgroup.com) | mobile: 0404466846 | [CV/Resume](http://www.visualcv.com/philipsenger) | [blog](http://www.apachecommonstipsandtricks.blogspot.com/) | [LinkedIn](http://au.linkedin.com/in/philipsenger) | [twitter](http://twitter.com/PSengerDownUndr) | [keybase](https://keybase.io/psenger)
 
 Ive been building API for Service Oriented Applications for over a decade. Many API design opinions and guidelines I have found are academic in nature and less real world or practical. My goal with this article is to describe the best practices for a pragmatic API approach based on my experience and as a framework for my thoughts. Ive found the following items to be the key to the success of my systems The Human Aspect, Security and Permissions, Implementation.
+
+- [Best Practices for Building REST Apis](#best-practices-for-building-rest-apis)
+  * [The Human Aspect](#the-human-aspect)
+    + [Adoption](#adoption)
+      - [Easy of use](#easy-of-use)
+      - [Documentation](#documentation)
+      - [Stability](#stability)
+      - [Assurance](#assurance)
+    + [Standards and Consistency](#standards-and-consistency)
+      - [Naming convention](#naming-convention)
+        * [Nouns](#nouns)
+        * [Versioning](#versioning)
+        * [Plural](#plural)
+          + [CRUD](#crud)
+    + [Self Discovery](#self-discovery)
+    + [Intuitive](#intuitive)
+  * [Security and Permissions](#security-and-permissions)
+    + [Principal and Subjects](#principal-and-subjects)
+    + [Passwords](#passwords)
+    + [Encrypted Transmission](#encrypted-transmission)
+    + [Tokens](#tokens)
+    + [Rate Limiting](#rate-limiting)
+    + [Service Unavailable 504](#service-unavailable-504)
+    + [Payload Content Restrictions](#payload-content-restrictions)
+    + [Payload Wrappers / Envelopes and Pagination](#payload-wrappers--envelopes-and-pagination)
+    + Errors - Problem Details for HTTP APIs ( RFC 7807 )
 	
 ## The Human Aspect
 
