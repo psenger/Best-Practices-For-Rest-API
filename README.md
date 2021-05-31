@@ -264,6 +264,7 @@ HTTP/1.1 403 Forbidden
    {
     "type": "https://example.com/probs/out-of-credit",
     "title": "You do not have enough credit.",
+    "status": 403,
     "detail": "Your current balance is 30, but that costs 50.",
     "instance": "/account/12345/msgs/abc",
     "balance": 30,
@@ -282,6 +283,7 @@ HTTP/1.1 400 Bad Request
    {
    "type": "https://example.net/validation-error",
    "title": "Your request parameters didn't validate.",
+   "status": 400,
    "invalid-params": [ {
                          "name": "age",
                          "reason": "must be a positive integer"
