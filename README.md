@@ -226,7 +226,7 @@ Projection: +fname,+lname,+ssn
 
 I have implemented on several cases a Payload Wrapper or Envelope for the purpose of pagination through large volumes of data. They basically looked like the following. 
 
-In this case, it included a page, page size, and toal. 
+In this case, it included a page, page size, and total. 
 ```JS
 { 
 	data: [],
