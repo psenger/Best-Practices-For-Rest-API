@@ -115,6 +115,10 @@ I've been building APIs for Service Oriented Applications for two decades. Many 
 
 ---
 
+## Contributing
+
+Contributions are welcome. Please read [CONTRIBUTING.md](CONTRIBUTING.md) before opening a PR — all changes must start with a GitHub issue.
+
 ## License
 
 This work is licensed under a [Creative Commons Attribution 4.0 International License](https://creativecommons.org/licenses/by/4.0/).
