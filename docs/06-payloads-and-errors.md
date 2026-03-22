@@ -279,4 +279,4 @@ Written by [Philip A Senger](https://psenger.github.io/philip_a_senger_cv/) | [L
 
 This work is licensed under a [Creative Commons Attribution 4.0 International License](https://creativecommons.org/licenses/by/4.0/).
 
-[Previous: Resilience](05-resilience.md) | [Next: GraphQL vs REST](07-graphql-vs-rest.md)
+[Previous: Resilience](05-resilience.md) | [Next: GraphQL vs REST](07-api-communication-patterns.md)

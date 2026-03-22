@@ -324,6 +324,119 @@ When you can't find "who's holding onto what":
 
 The goal is transparency: anyone debugging the system should be able to determine where data came from and how fresh it is.
 
+## Observability and Metrics
+
+Observability is the ability to understand what's happening inside a system by examining its outputs. Plan for this at design time — bolting it on after launch is expensive and incomplete.
+
+### The Three Pillars
+
+| Pillar | What It Tells You | API Design Implications |
+|--------|-------------------|------------------------|
+| **Metrics** | How the system is performing (quantitative) | Define what to measure, expose `/metrics` endpoint |
+| **Logs** | What happened (events, errors, decisions) | Structured logging format, correlation IDs |
+| **Traces** | How a request flowed through the system | Distributed tracing headers, span context propagation |
+
+### SLIs, SLOs, and Error Budgets
+
+Define these at design time, not after launch.
+
+- **SLI (Service Level Indicator)** — a quantitative measure of service health. Examples: request latency (p99), error rate, availability, throughput.
+- **SLO (Service Level Objective)** — a target value for an SLI. Example: "p99 latency < 200ms" or "error rate < 0.1%".
+- **SLA (Service Level Agreement)** — a contractual promise to consumers based on SLOs. Breaking an SLA has business consequences.
+- **Error Budget** — the amount of unreliability you can tolerate (100% minus SLO). If your SLO is 99.9% availability, your error budget is 0.1% downtime (~8.7 hours per year). When the budget is spent, freeze deployments and focus on reliability.
+
+Define SLOs for at minimum:
+
+- **Availability** — percentage of successful requests (non-5xx)
+- **Latency** — p50, p95, p99 response times
+- **Error rate** — percentage of requests returning errors
+- **Throughput** — requests per second
+
+Align SLOs with downstream timeout budgets. If your SLO is p99 < 200ms but a downstream call has a 5-second timeout, something is misconfigured.
+
+See the Google SRE Book[^15] for a thorough treatment of SLIs, SLOs, and error budgets.
+
+### RED Metrics
+
+For every endpoint, plan to capture RED metrics[^16]:
+
+- **R**ate — requests per second
+- **E**rrors — error count/rate by status code
+- **D**uration — latency distribution (p50, p95, p99)
+
+Also track saturation metrics:
+
+- Connection pool utilisation
+- Thread/goroutine count
+- Memory usage
+- Queue depth
+
+**A note on cardinality:** Do not use high-cardinality values (user IDs, request IDs, full URL paths with resource IDs) as metric labels. High-cardinality labels explode storage costs and make queries unusably slow. Use traces for high-cardinality data, not metric labels.
+
+Expose a `/metrics` endpoint in Prometheus exposition format[^17] or equivalent for your observability stack.
+
+### Structured Logging
+
+Log in structured JSON rather than unstructured text. Every log entry should include:
+
+```json
+{
+  "timestamp": "2024-01-15T09:30:00.123Z",
+  "level": "error",
+  "service": "orders-api",
+  "correlationId": "req-abc123",
+  "requestId": "7f3d9c",
+  "message": "Payment service timeout",
+  "durationMs": 5001,
+  "downstream": "payment-service"
+}
+```
+
+Use log levels consistently:
+
+- `ERROR` — failures requiring action, service-affecting problems
+- `WARN` — degradation, unusual conditions, approaching limits
+- `INFO` — business events, state transitions, successful operations
+- `DEBUG` — development detail, removed or sampled out in production
+
+Never log sensitive data: passwords, tokens, full credit card numbers, or PII. Log the request ID, not the request body. Use a centralised log aggregation system (ELK, Loki, CloudWatch, Datadog) — individual service logs are insufficient for debugging distributed systems or detecting coordinated attacks.
+
+### Distributed Tracing
+
+Distributed tracing gives you a complete picture of how a request flows across services. Without it, debugging a latency issue in a system with 10 services is nearly impossible.
+
+Use OpenTelemetry[^18] as the instrumentation standard. Propagate W3C Trace Context[^19] headers across all service boundaries:
+
+```http
+traceparent: 00-0af7651916cd43dd8448eb211c80319c-b7ad6b7169203331-01
+tracestate: vendor-specific-data
+```
+
+Create spans for key operations:
+
+- HTTP handler (top-level span)
+- Database queries
+- External API calls
+- Queue publish/consume operations
+- Cache lookups
+
+Configure trace sampling: 100% tracing at production scale is expensive. Sample 1–10% in production, 100% for errors and slow requests.
+
+### Alerting
+
+Alerts should fire on user-facing impact, not just infrastructure metrics.
+
+**Alert on SLO burn rate** — how fast are you consuming the error budget, not just "is the error rate above threshold right now". A brief spike at 10× the normal error rate is more urgent than a sustained rate at 2× — even if the absolute numbers are similar.
+
+**Every alert needs:**
+
+- A clear description of the user-facing impact
+- A runbook or at least a first diagnostic step
+- An escalation path (who gets paged, in what order)
+- A way to silence it while you're actively working the issue
+
+Avoid alert fatigue. An on-call engineer who receives 50 alerts per night will start ignoring them. Tune alert thresholds so every page is actionable.
+
 ---
 
 ## References
@@ -342,6 +455,11 @@ The goal is transparency: anyone debugging the system should be able to determin
 [^12]: Fielding, R. and Reschke, J. (2014). "Hypertext Transfer Protocol (HTTP/1.1): Conditional Requests." RFC 7232, IETF. https://datatracker.ietf.org/doc/html/rfc7232
 [^13]: Nottingham, M. (2010). "HTTP Cache-Control Extensions for Stale Content." RFC 5861, IETF. https://datatracker.ietf.org/doc/html/rfc5861
 [^14]: Redis. "In-memory data structure store." https://redis.io/
+[^15]: Google. "Site Reliability Engineering — Service Level Objectives." https://sre.google/sre-book/service-level-objectives/
+[^16]: Wilkie, Tom. (2018). "The RED Method: how to instrument your services." Grafana Blog. https://grafana.com/blog/2018/08/02/the-red-method-how-to-instrument-your-services/
+[^17]: Prometheus. "Exposition Formats." https://prometheus.io/docs/instrumenting/exposition_formats/
+[^18]: OpenTelemetry. "Vendor-agnostic observability framework." https://opentelemetry.io/
+[^19]: W3C. "Trace Context." https://www.w3.org/TR/trace-context/
 
 ---
 
