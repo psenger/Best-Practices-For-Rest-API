@@ -1,6 +1,6 @@
 # API Gateways
 
-[Index](../README.md) | [Previous: GraphQL vs REST](07-graphql-vs-rest.md)
+[Index](../README.md) | [Previous: GraphQL vs REST](07-api-communication-patterns.md)
 
 ---
 
@@ -310,4 +310,4 @@ Written by [Philip A Senger](https://psenger.github.io/philip_a_senger_cv/) | [L
 
 This work is licensed under a [Creative Commons Attribution 4.0 International License](https://creativecommons.org/licenses/by/4.0/).
 
-[Previous: GraphQL vs REST](07-graphql-vs-rest.md) | [Next: Glossary](09-glossary.md)
+[Previous: GraphQL vs REST](07-api-communication-patterns.md) | [Next: Glossary](09-glossary.md)
