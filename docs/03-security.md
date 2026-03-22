@@ -574,6 +574,198 @@ await redis.set(`sessions:user:${userId}:${newJti}`, sessionData);
 
 For high-security applications (banking, healthcare), consider single session with step-up authentication for sensitive operations. See OWASP Session Management Cheat Sheet[^56].
 
+## Multi-Factor Authentication
+
+Not all MFA is equal. Ranked by security strength:
+
+1. **Passkeys / FIDO2 / WebAuthn**[^57] — Phishing-resistant, hardware-bound. The gold standard per NIST SP 800-63-4[^58]. Passkeys replace passwords entirely and are not susceptible to phishing.
+2. **TOTP (authenticator apps)** — Good, works offline, widely supported.
+3. **SMS / Email OTP** — Fallback only. NIST SP 800-63-4 has significantly downgraded SMS-based authentication. Not acceptable for high-assurance scenarios due to SIM swapping and SS7 vulnerabilities.
+
+When possible, implement FIDO2/WebAuthn/passkeys as the primary path. SMS OTP should require explicit risk acceptance documentation.
+
+For recovery: provide backup codes, but ensure they're treated with the same sensitivity as passwords.
+
+## BOLA — Broken Object Level Authorization
+
+Broken Object Level Authorization (BOLA)[^59] is the #1 risk in the OWASP API Security Top 10. It occurs when an API allows a user to access another user's resources simply by changing an ID in the request.
+
+```http
+GET /api/orders/1001   ← user's own order
+GET /api/orders/1002   ← another user's order — should this be allowed?
+```
+
+Defenses:
+
+- **Never trust client-supplied IDs alone.** Always verify the requesting user owns or has permission to access the resource.
+- **Use opaque, non-sequential IDs** (UUIDs, type-prefixed random IDs). Sequential integers make enumeration trivial.
+- **Enforce authorisation at the data layer**, not just the route level.
+
+```javascript
+// Bad - only checks authentication
+const order = await Order.findById(req.params.id);
+
+// Good - checks ownership
+const order = await Order.findOne({ id: req.params.id, userId: req.user.id });
+if (!order) return res.status(404).json({ error: 'Not found' });
+```
+
+## DPoP — Demonstration of Proof of Possession
+
+Bearer tokens are vulnerable: if a token is stolen, the attacker can use it from any device. DPoP (RFC 9449)[^60] binds an access token to a specific client's public key, making stolen tokens useless without the corresponding private key.
+
+```http
+POST /token
+DPoP: <signed-proof-JWT>
+
+→ access_token bound to that key
+→ subsequent requests must include matching DPoP proof
+```
+
+DPoP is particularly important for public clients (SPAs, mobile apps) where token storage is inherently less secure. Consider it when operating under OAuth 2.1 requirements.
+
+## Backend-for-Frontend (BFF) Pattern
+
+For SPAs and mobile apps, the BFF pattern[^61] keeps tokens entirely server-side:
+
+```
+Browser ←—— session cookie (HttpOnly) ——→ BFF Server ←—— access token ——→ API
+```
+
+The frontend never sees the token. The BFF exchanges the session cookie for an access token on each upstream call. This eliminates the XSS-via-localStorage attack surface entirely.
+
+The BFF also handles CSRF protection (see below), token refresh, and can aggregate multiple API calls into a single response for the frontend.
+
+## Enumeration Attack Prevention
+
+Enumeration attacks probe an API systematically to discover valid resources, usernames, emails, or IDs. They require no authentication and exploit normal API behaviour.
+
+**Attack vectors:**
+
+| Endpoint | Attack | Example |
+|----------|--------|---------|
+| Registration | Email enumeration | "email already taken" reveals the account exists |
+| Login | Username enumeration | "user not found" vs "wrong password" differs |
+| Password reset | Email enumeration | "email not found" reveals non-registration |
+| Resource IDs | Object enumeration | Sequential IDs allow full catalog scraping |
+
+**Defences:**
+
+- **Consistent responses.** Return identical status codes, bodies, and response times regardless of whether the account/resource exists. Use constant-time operations to prevent timing attacks.
+- **Opaque, non-sequential IDs.** UUID v4 has 2^122 possibilities — brute-force is infeasible.
+- **Aggressive rate limiting** on auth endpoints. Login: 5-10 attempts/IP/min. Password reset: 3/email/hour.
+- **CAPTCHA** after N failed attempts.
+- **Never expose "check availability" endpoints** without rate limiting and CAPTCHA.
+
+## Information Disclosure Prevention
+
+Every piece of information leaked through responses, headers, or error messages gives attackers a map of your internals.
+
+**Error responses:**
+
+- Suppress stack traces in production — they reveal framework, language, file paths, and dependency versions.
+- Never expose raw database errors — SQL errors reveal table names, column names, and query structure.
+- Use generic messages for internal failures: "An internal error occurred", not "NullPointerException in PaymentProcessor.java:142".
+
+**Response headers:**
+
+- Remove or genericise the `Server` header. Don't advertise `Server: Apache/2.4.52 (Ubuntu)`.
+- Remove `X-Powered-By`. Don't reveal `X-Powered-By: Express` or `X-Powered-By: PHP/8.2`.
+- Avoid framework-specific cookie names (`JSESSIONID`, `PHPSESSID`, `connect.sid`).
+
+**Authorisation errors:**
+
+For sensitive resources, return `404 Not Found` for unauthorised access rather than `403 Forbidden`. This prevents confirming the resource exists.
+
+## CSRF Protections
+
+Cross-Site Request Forgery (CSRF) tricks an authenticated user's browser into making unintended requests. If your API uses cookie-based authentication (including HttpOnly cookies), CSRF protection is required — the browser sends cookies automatically, even on cross-site requests.
+
+> **Key insight:** CSRF is a cookie problem. Bearer tokens in `Authorization` headers are not sent automatically by browsers, so CSRF does not apply to header-based auth.
+
+**Layered defences:**
+
+**1. SameSite cookie attribute (primary defence)**
+
+```
+Set-Cookie: session=...; HttpOnly; Secure; SameSite=Lax
+```
+
+- `Strict` — never sent on cross-site requests. Most secure, but breaks cross-site navigation (e.g., links from email).
+- `Lax` — sent on top-level GET navigation, blocked on cross-site POST/PUT/DELETE. Good balance for most APIs.
+- `None` — always sent; requires `Secure`. Only for APIs that must be called cross-origin with cookies.
+
+**2. Anti-CSRF tokens (synchronizer token pattern)**
+
+Generate a server-side token tied to the session. Require it in a custom header (`X-CSRF-Token`) or form field on every state-changing request. Never put it in a cookie.
+
+**3. Fetch Metadata headers**
+
+Modern browsers send `Sec-Fetch-Site`, `Sec-Fetch-Mode`, and `Sec-Fetch-Dest` headers. The server can reject requests where `Sec-Fetch-Site: cross-site` for state-changing operations. These headers cannot be forged by JavaScript.
+
+**4. Re-authentication for sensitive operations**
+
+High-risk operations (money transfer, email change, account deletion) should require re-authentication regardless of CSRF protection. See the step-up authentication section above.
+
+## Security Headers
+
+```http
+Strict-Transport-Security: max-age=31536000; includeSubDomains
+Content-Security-Policy: default-src 'self'
+X-Content-Type-Options: nosniff
+X-Frame-Options: DENY
+```
+
+- **HSTS**[^62] — forces HTTPS for the declared period. `includeSubDomains` prevents subdomain bypass attacks.
+- **CSP**[^63] — restricts what resources the browser will load. Mitigates XSS impact.
+- **X-Content-Type-Options: nosniff** — prevents MIME-type sniffing attacks.
+- **X-Frame-Options** or `frame-ancestors` in CSP — prevents clickjacking.
+
+Use [Mozilla Observatory](https://observatory.mozilla.org)[^64] to audit your headers.
+
+## Security Logging and Monitoring
+
+You cannot respond to what you cannot see. Plan logging and monitoring at design time.
+
+**Log all authentication events:**
+
+- Login success and failure (with reason, without exposing user existence)
+- Token refresh and revocation
+- MFA challenges and outcomes
+- Step-up authentication triggers
+
+**Log all authorisation failures:**
+
+- Access denied events with the resource and action attempted
+- BOLA attempts (user A trying to access user B's resource)
+
+**Forward to a SIEM or centralised logging system.** Individual service logs are insufficient for detecting coordinated attacks (credential stuffing, distributed enumeration).
+
+**Anomaly detection:**
+
+- Credential stuffing: many failures across many accounts from few IPs
+- Enumeration: sequential ID access patterns, high-volume 404s
+- Impossible travel: same account authenticated from two distant locations within minutes
+
+**Audit logs must be tamper-resistant.** Write-once storage, cryptographic chaining, or an append-only log service. Attackers who gain access will try to cover their tracks.
+
+## OWASP API Security Top 10 (2023)
+
+Review every API design against these risks[^65]:
+
+| # | Risk | What to Check |
+|---|------|---------------|
+| API1 | Broken Object Level Authorization | Can users access other users' resources by changing IDs? |
+| API2 | Broken Authentication | Are auth mechanisms robust? Token handling secure? |
+| API3 | Broken Object Property Level Authorization | Can users read/write properties they shouldn't? (mass assignment) |
+| API4 | Unrestricted Resource Consumption | Are rate limits, pagination limits, and payload sizes enforced? |
+| API5 | Broken Function Level Authorization | Can regular users access admin endpoints? |
+| API6 | Unrestricted Access to Sensitive Business Flows | Can automated attacks exploit business logic? (scalping, credential stuffing) |
+| API7 | Server-Side Request Forgery (SSRF) | Do any endpoints fetch external URLs from user input? |
+| API8 | Security Misconfiguration | Are defaults secure? Is error info over-exposed? |
+| API9 | Improper Inventory Management | Are all API versions documented? Are deprecated versions sunset? |
+| API10 | Unsafe Consumption of APIs | Are third-party API responses validated before use? |
+
 ---
 
 ## References
@@ -634,6 +826,15 @@ For high-security applications (banking, healthcare), consider single session wi
 [^54]: Tor Project. "Anonymity Online." https://www.torproject.org/
 [^55]: European Union. "General Data Protection Regulation (GDPR)." https://gdpr.eu/
 [^56]: OWASP. "Session Management Cheat Sheet." https://cheatsheetseries.owasp.org/cheatsheets/Session_Management_Cheat_Sheet.html
+[^57]: FIDO Alliance. "Passkeys." https://fidoalliance.org/passkeys/
+[^58]: NIST. (2024). "Digital Identity Guidelines." NIST SP 800-63-4. https://pages.nist.gov/800-63-4/
+[^59]: OWASP. "API Security Top 10 2023 - API1:2023 Broken Object Level Authorization." https://owasp.org/API-Security/editions/2023/en/0xa1-broken-object-level-authorization/
+[^60]: Fett, D. et al. (2023). "OAuth 2.0 Demonstrating Proof of Possession (DPoP)." RFC 9449, IETF. https://datatracker.ietf.org/doc/html/rfc9449
+[^61]: Newman, S. (2015). "Pattern: Backends For Frontends." https://samnewman.io/patterns/architectural/bff/
+[^62]: Hodges, J., Jackson, C., and Barth, A. (2012). "HTTP Strict Transport Security (HSTS)." RFC 6797, IETF. https://datatracker.ietf.org/doc/html/rfc6797
+[^63]: W3C. "Content Security Policy Level 3." https://www.w3.org/TR/CSP3/
+[^64]: Mozilla. "Mozilla Observatory." https://observatory.mozilla.org
+[^65]: OWASP. "OWASP API Security Top 10 (2023)." https://owasp.org/API-Security/
 
 ---
 
